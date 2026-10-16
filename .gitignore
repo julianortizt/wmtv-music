@@ -1,0 +1,15 @@
+node_modules
+client/node_modules
+.env
+.env.*
+.vercel
+dist
+build
+.DS_Store
+*.log
+server/uploads
+server/src/uploads
+server/src/data
+docker/minio_data
+docker/db_data
+docker/redis_data
