@@ -1,9 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
-  "installCommand": "npm install --prefix client",
-  "buildCommand": "npm run build",
-  "outputDirectory": "client/dist",
   "rewrites": [
     {
       "source": "/api/:path*",
@@ -14,7 +10,7 @@
       "destination": "https://TU-BACKEND.example.com/api/uploads/:path*"
     },
     {
-      "source": "^/(?!api/|uploads/|assets/|_vercel/)(?!.*\\.[a-zA-Z0-9]+$).*$",
+      "source": "/((?!api/|uploads/|assets/|_vercel/)(?!.*\\.[a-zA-Z0-9]+$).*)",
       "destination": "/index.html"
     }
   ],

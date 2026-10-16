@@ -8,17 +8,20 @@ Guía para subir el frontend React a Vercel. El **backend no corre en Vercel**
 
 ## Cómo funciona la configuración
 
-El archivo [`vercel.json`](./vercel.json) en la **raíz** del repo ya trae todo:
+La config de rutas vive en **dos `vercel.json` idénticos** — en la raíz y en
+`client/` — para que funcione independientemente de desde dónde Vercel lea la
+configuración cuando *Root Directory = `client`*:
 
-| Clave | Valor | Por qué |
-|---|---|---|
-| `installCommand` | `npm install --prefix client` | Instala solo dependencias del frontend |
-| `buildCommand` | `npm run build` | Build de Vite |
-| `outputDirectory` | `client/dist` | Salida del build |
-| `rewrites` `/api/*` → backend | proxy al backend | El navegador solo ve el dominio de Vercel |
-| `rewrites` `/uploads/*` → backend | proxy a `/api/uploads/*` | Compatibilidad con URLs antiguas |
-| `rewrites` fallback | `index.html` | Rutas de React Router (`/watch/:id`, etc.) |
-| `headers` en `/api/*` | `x-vercel-enable-rewrite-caching: 0` | **Seguridad:** impide que Vercel cachee en CDN respuestas personalizadas (`/api/auth/me`, feed) |
+| Regla | Efecto |
+|---|---|
+| `rewrites` `/api/*` → backend | proxy al backend (el navegador solo ve el dominio de Vercel) |
+| `rewrites` `/uploads/*` → backend | compatibilidad con URLs antiguas de medios |
+| `rewrites` fallback | rutas de React Router (`/watch/:id`, etc.) → `index.html` (excluye `/api`, `/uploads`, `/assets` y archivos con extensión) |
+| `headers` en `/api/*` | `x-vercel-enable-rewrite-caching: 0` — **seguridad:** impide que Vercel cachee en CDN respuestas personalizadas (`/api/auth/me`, feed) |
+
+El **build** no viene del archivo: lo aporta el dashboard al importar con
+*Root Directory = `client`* (Framework **Vite**, Build `npm run build`,
+Output **`dist`**, Install `npm install`).
 
 Como todo pasa por el mismo dominio, las **cookies httpOnly** (`access_token`,
 `SameSite=Lax`) funcionan sin tocar CORS.
@@ -42,19 +45,27 @@ git push -u origin main
 ### 2. Importar el repo en Vercel
 
 1. Ve a [vercel.com/new](https://vercel.com/new) → **Import Git Repository** → elige tu repo.
-2. **No cambies nada más**: `vercel.json` ya define build e instalación.
-3. Pulsa **Deploy**. El build debe terminar en verde.
+2. **No cambies nada**: los settings detectados ya son los correctos:
+   - Root Directory: `client`
+   - Framework: **Vite** · Build: `npm run build` · Output: `dist` · Install: `npm install`
+3. Si aparece el error *"Rewrite at index N has invalid `source` pattern"*,
+   es la validación del código anterior → vuelve a importar/recargar para que
+   Vercel relea el repo (el patrón nuevo está validado con el validador oficial
+   de Vercel: `getTransformedRoutes` → OK).
+4. Pulsa **Deploy**. El build debe terminar en verde.
 
 ### 3. ⚠️ Poner la URL real del backend (obligatorio)
 
-Mientras tanto, `vercel.json` tiene el placeholder `https://TU-BACKEND.example.com`.
-Busca y reemplaza **todas** las apariciones por la URL pública (HTTPS) de tu backend:
+Mientras tanto, los dos `vercel.json` (`/vercel.json` y `/client/vercel.json`)
+tienen el placeholder `https://TU-BACKEND.example.com`.
+Busca y reemplaza **todas** las apariciones en **ambos archivos** por la URL
+pública (HTTPS) de tu backend:
 
 ```bash
-sed -i 's#https://TU-BACKEND.example.com#https://TU-BACKEND.example.com#g' vercel.json
+sed -i 's#https://TU-BACKEND.example.com#https://TU-BACKEND.example.com#' vercel.json client/vercel.json
 ```
 
-*(Sustituye el segundo valor por tu URL real; o edita `vercel.json` a mano.)*
+*(Sustituye el segundo valor por tu URL real; o edita los archivos a mano.)*
 
 Haz **redeploy** en Vercel después de cambiarlo.
 
